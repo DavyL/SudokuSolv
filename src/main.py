@@ -20,22 +20,61 @@ def newEmptyGrid():
 #Takes a grid containing only list containing line elements
 #Returns a grid containing each elements from input and all of the possible candidates as tuple
 def grid2SGrid(grid):
-    for numLine in range(len(grid)):
+    for numLine in range(9):
         for elem in range(9):
             grid[numLine][elem] = (grid[numLine][elem], [i for i in range(1,9)]) 
     cleanSGrid(grid)
     return grid
 
+def SGrid2Grid(SGrid):
+    for numLine in range(9):
+        for elem in range(9):
+            SGrid[numLine][elem] = grid[numLine][elem][0]
+    return SGrid
+
 #Checks for non zero values of a standard grid
 #When found their second members switch to an empty list
 def cleanSGrid(SGrid):
-    
-    cleanTrivialCand(SGrid)    
-    cleanLine(SGrid)
-    cleanColumns(SGrid) 
-    cleanLine(SGrid)
+    SGrid = cleanTrivialCand(SGrid)    
+    SGrid = cleanLine(SGrid)
+    SGrid = cleanTrivialCand(SGrid)    
+    SGrid = cleanColumns(SGrid)
+    SGrid = cleanTrivialCand(SGrid)    
+    SGrid = cleanSquare(SGrid)
+    SGrid = cleanTrivialCand(SGrid)    
     return SGrid
+def solveGrid(SGrid):
+    #candNum = 1
+    #while candNum > 0:
+    #    candNum = 0
+    #    for line in range(9):
+    #        for elem in range(9):
+    #            candNum += len(SGrid[line][elem][1])
+    #    print("Candidates left : ", candNum)
+    #    printSudoku(SGrid) 
+    #    SGrid = cleanSGrid(SGrid)
+    #printSudoku(SGrid)
+    #print("HELLOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO")
 
+
+    countCandidates(SGrid)
+    printSudoku(SGrid)
+    cleanLine(SGrid)
+    countCandidates(SGrid)
+    printSudoku(SGrid)
+    cleanColumns(SGrid)
+    countCandidates(SGrid)
+    printSudoku(SGrid)
+    cleanSquare(SGrid)
+
+
+def countCandidates(SGrid):
+    candNum = 0
+    for line in range(9):
+        for elem in range(9):
+            candNum+= len(SGrid[line][elem][1])
+    print("Candidates left : ", candNum)
+            
 #If there is already a value removes candidates
 def cleanTrivialCand(SGrid):
     for lineNum in range(9):            #Cleans trivial values
@@ -47,7 +86,7 @@ def cleanTrivialCand(SGrid):
 #Removes from candidates values that are already in the same line
 #Parses a grid
 def cleanLine(SGrid):
-    for i in range(9):                  #Cleans line
+    for i in range(9):
         SGrid[i] = updateLineCand(SGrid[i])
         for elemNum in range(len(SGrid[i])):
             if SGrid[i][elemNum][0] == 0:
@@ -63,7 +102,12 @@ def cleanColumns(SGrid):
     SGrid = retColumns(SGrid)
    
     return SGrid
+def cleanSquare(SGrid):
+    SGrid = square2Line(SGrid)
+    cleanLine(SGrid)
+    SGrid = square2Line(SGrid)
 
+    return SGrid
 #If there's only one single candidate, then sets it as a value
 #Parses the whole grid
 def swapSingleCand(SGrid):
@@ -108,6 +152,48 @@ def retColumns(grid):
             columns[i].append(line[i])
     return columns
 
+#Returns a SGrid containing squares as lines
+#line 0 : square 0,0
+#line 1 : square 0,1
+#line 2 : square 0,2
+#...
+#line 8 : square 2,2
+def square2Line(SGrid):
+    squareGrid = []
+    #squareGrid.append([SGrid[line][0:3] for line in range(4)])
+    #for i in squareGrid:
+    #    print("i : " , i)
+    for line in range(9):
+        squareGrid.append([])
+    count = 0
+    for line in range(3):
+        for i in SGrid[line][0:3] : 
+            squareGrid[0].append(i)
+        for j in SGrid[line][3:6]:
+            squareGrid[1].append(j)
+        for k in SGrid[line][6:9]:
+            squareGrid[2].append(k)
+
+    for line in range(3,6):
+        for i in SGrid[line][0:3] : 
+            squareGrid[3].append(i)
+        for j in SGrid[line][3:6]:
+            squareGrid[4].append(j)
+        for k in SGrid[line][6:9]: 
+            squareGrid[5].append(k)
+
+    for line in range(6,9):
+        for i in SGrid[line][0:3] : 
+            squareGrid[6].append(i)
+        for j in SGrid[line][3:6]:
+            squareGrid[7].append(j)
+        for k in SGrid[line][6:9]: 
+            squareGrid[8].append(k)
+
+    
+    #squareGrid.append(SGrid[1][0:3])
+    #squareGrid.append(SGrid[2][0:3])
+    return squareGrid
 
 #Checks if the respects the rules
 #Checks lines then columns
@@ -140,15 +226,18 @@ def checkLine(line):
 
     return list(set(issue))
         
-grid =	readSudoku("../grid/grid1.gr")
-grid[2][2] = 0
-grid[2][3] = 0 
+grid =	readSudoku("../grid/grid2.gr")
+#grid[2][2] = 0
+#grid[2][3] = 0 
 printSudoku(grid)
 if (checkSudoku(grid) != ([],[])):
         print("OH DEAR, WE ARE IN TROUBLE")
 SGrid = grid2SGrid(grid)
-printSudoku(SGrid)
-
+#printSudoku(SGrid)
+#square2Line(SGrid)
+#printSudoku(SGrid2Grid(SGrid))
+solveGrid(SGrid)
+#printSudoku(SGrid)
 
 ##################################################################################################
 ##################################################################################################
