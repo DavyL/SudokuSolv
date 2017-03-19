@@ -1,5 +1,4 @@
 
-
 #Read a file containing a sudoku
 #File shall be a python list
 def readSudoku(filename):
@@ -22,7 +21,8 @@ def newEmptyGrid():
 def grid2SGrid(grid):
     for numLine in range(9):
         for elem in range(9):
-            grid[numLine][elem] = (grid[numLine][elem], [i for i in range(1,9)]) 
+            grid[numLine][elem] = (grid[numLine][elem], [i for i in range(1,10)]) 
+    cleanTrivialCand(grid)
     cleanSGrid(grid)
     return grid
 
@@ -34,38 +34,124 @@ def SGrid2Grid(SGrid):
 
 #Checks for non zero values of a standard grid
 #When found their second members switch to an empty list
-def cleanSGrid(SGrid):
-    SGrid = cleanTrivialCand(SGrid)    
-    SGrid = cleanLine(SGrid)
-    SGrid = cleanTrivialCand(SGrid)    
-    SGrid = cleanColumns(SGrid)
-    SGrid = cleanTrivialCand(SGrid)    
-    SGrid = cleanSquare(SGrid)
-    SGrid = cleanTrivialCand(SGrid)    
+def cleanSGrid(SGrid): 
+    SGrid = cleanBasic(SGrid)
+    SGrid = rule3(SGrid)
+    SGrid = rule4(SGrid) 
+    
     return SGrid
+
+
+#returns False iff a candidate appears more than once
+def isAlone(SLine, cand):
+    occur = 0
+    for elem in SLine:
+        if cand in elem[1]:
+            occur += 1
+            if occur > 1:
+                return False
+    if occur == 1:
+        return True
+    else:
+        return False
+
+def cleanBasic(SGrid):
+    SGrid = cleanLine(SGrid)
+    SGrid = cleanColumns(SGrid)
+    SGrid = cleanSquare(SGrid) 
+
+    return SGrid
+     
+def rule3Line(SGrid):
+    for cand in range(1, 10):
+        for line in range(9):
+            if isAlone(SGrid[line], cand):
+                #print(cand, " APPEARS ONLY ONCE AT LINE ", line)
+                for column in range(9):
+                    if cand in SGrid[line][column][1]:
+                        SGrid[line][column] = (cand, [])
+                        cleanBasic(SGrid)
+    return SGrid
+
+def rule3Square(SGrid):
+    return square2Line(rule3Line(square2Line(SGrid)))
+
+def rule3Column(SGrid):
+    return retColumns(rule3Line(retColumns(SGrid)))
+
+def rule3(SGrid):
+    SGrid = rule3Line(SGrid)
+
+    SGrid = rule3Column(SGrid)
+
+    #SGrid = rule3Square(SGrid)
+
+    return SGrid
+
+def isAlign(SLine, column, cand):
+    occur = 0
+    for elem in SLine[(column//3)*3: (column//3)*3 + 2]:
+        if cand in elem[1]:
+            occur += 1
+    if occur >= 2:
+        return occur
+
+#returns true iff occcur appears elsewhere in square
+def isInSquare(SGrid, line, column, occur, cand):
+    SSquare = square2Line(SGrid)
+    for elem in SSquare[(line//3) * 3 + column // 3]:
+        if cand in elem[1]:
+            #print(cand, "APPEARS IN GRID")
+            occur -= 1
+    
+    if not occur:
+        return False
+    else: 
+        return True
+            
+def rule4Line(SGrid):
+    for cand in range(1,10):
+        for line in range(0,9):
+            for column in range(0,9):
+                cleanBasic(SGrid)
+                occur = isAlign(SGrid[line], column, cand)
+                if occur:
+                    #print("AT LINE ", line, " AND COLUMN ", column, " THE CANDIDATE : ", cand, "APPEARS : ", isAlign(SGrid[line], column, cand))
+                    if not isInSquare(SGrid, line, column, occur, cand):
+                        print("AT LINE ", line, " AND COLUMN ", column, " THE CANDIDATE : ", cand, "APPEARS : ", occur, "AND IT APPEARS NOWHERE ELSE IN THE SQUARE")
+                        for col in range(9):
+                            if cand in SGrid[line][col][1] and (col != (column//3) * 3 or col != (column//3) * 3 + 1 or col != (column // 3) * 3 + 2)  :
+                                printSudoku(SGrid)
+                                SGrid[line][col][1].remove(cand)
+    return SGrid
+
+def rule4Columns(SGrid):
+    return retColumns(rule4Line(retColumns(SGrid)))
+
+def rule4(SGrid):
+    SGrid = rule4Line(SGrid)
+    SGrid = rule4Columns(SGrid)
+
+    return SGrid
+
+def removeOccurences(SLine, rem):
+    for elemNum in range(lenSLine):
+        if rem in SLine[elemNum][1]:
+            SLine[elem][Num][1].remove(rem)
+    return SLine[0:3], SLine[3,6]
+
 def solveGrid(SGrid):
-    #candNum = 1
-    #while candNum > 0:
-    #    candNum = 0
-    #    for line in range(9):
-    #        for elem in range(9):
-    #            candNum += len(SGrid[line][elem][1])
-    #    print("Candidates left : ", candNum)
-    #    printSudoku(SGrid) 
-    #    SGrid = cleanSGrid(SGrid)
-    #printSudoku(SGrid)
-    #print("HELLOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO")
-
-
-    countCandidates(SGrid)
-    printSudoku(SGrid)
-    cleanLine(SGrid)
-    countCandidates(SGrid)
-    printSudoku(SGrid)
-    cleanColumns(SGrid)
-    countCandidates(SGrid)
-    printSudoku(SGrid)
-    cleanSquare(SGrid)
+    candNum = 1
+    while candNum > 0:
+        candNum = 0
+        for line in range(9):
+            for elem in range(9):
+                candNum += len(SGrid[line][elem][1])
+        print("Candidates left : ", candNum, "candidates found : ", countValues(SGrid))
+        printSudoku(SGrid) 
+        SGrid = cleanSGrid(SGrid)
+        
+    return SGrid
 
 
 def countCandidates(SGrid):
@@ -76,6 +162,7 @@ def countCandidates(SGrid):
     print("Candidates left : ", candNum)
             
 #If there is already a value removes candidates
+#Shall only be used at init
 def cleanTrivialCand(SGrid):
     for lineNum in range(9):            #Cleans trivial values
         for elem in range(9):
@@ -87,8 +174,10 @@ def cleanTrivialCand(SGrid):
 #Parses a grid
 def cleanLine(SGrid):
     for i in range(9):
-        SGrid[i] = updateLineCand(SGrid[i])
-        for elemNum in range(len(SGrid[i])):
+        if(updateLineCand(SGrid[i])):
+            cleanLine(SGrid)
+
+        for elemNum in range(9):
             if SGrid[i][elemNum][0] == 0:
                 if len(SGrid[i][elemNum][1]) == 1:
                     SGrid[i][elemNum] = (SGrid[i][elemNum][1][0], [])
@@ -131,14 +220,15 @@ def updateLineCand(SLine):
         if SLine[elemNum][0] == 0:
             SLineLen = len(SLine[elemNum][1])
             for candNum in range(SLineLen):
-                cand = SLine[elemNum][1][SLineLen -1 - candNum]
+                cand = SLine[elemNum][1][SLineLen - 1 - candNum]
                 if (cand, []) in SLine:
                     SLine[elemNum][1].remove(cand)
-    return SLine
+                    return 1
+    return 0
 
 #Prints the Sudoku
 def printSudoku(grid):
-    for line in range(len(grid)):
+    for line in range(9):
         print(grid[line])
 
 
@@ -195,7 +285,7 @@ def square2Line(SGrid):
     #squareGrid.append(SGrid[2][0:3])
     return squareGrid
 
-#Checks if the respects the rules
+#Checks if the sudoku respects the rules
 #Checks lines then columns
 #return the lists containing issues inside lines then inside columns
 #If the grid contains no zero value then each list are the same 
@@ -210,8 +300,14 @@ def checkSudoku(grid):
             issueC.append(checkLine(columns))
     return issueL, issueC
 
-    
+def countValues(SGrid):
+    count = 0
+    for line in range(9):
+        for column in range(9):
+            if SGrid[line][column][0] != 0:
+                count += 1
 
+    return count
 #Checks if each element of a line appears only once
 #Returns a list containing each value that appears more than once
 def checkLine(line):
@@ -225,8 +321,15 @@ def checkLine(line):
                 issue.append(j)
 
     return list(set(issue))
-        
-grid =	readSudoku("../grid/grid2.gr")
+
+#This one is solved applying only rule 1 and 2        
+#grid =	readSudoku("../grid/grid3.gr")
+
+#This one is solved applying only rule 1, 2 and 3
+#grid = readSudoku("../grid/grid4.gr")
+
+grid = readSudoku("../grid/grid5.gr")
+
 #grid[2][2] = 0
 #grid[2][3] = 0 
 printSudoku(grid)
@@ -236,8 +339,9 @@ SGrid = grid2SGrid(grid)
 #printSudoku(SGrid)
 #square2Line(SGrid)
 #printSudoku(SGrid2Grid(SGrid))
-solveGrid(SGrid)
-#printSudoku(SGrid)
+SGrid = solveGrid(SGrid)
+print("FINAL GRID")
+printSudoku(SGrid)
 
 ##################################################################################################
 ##################################################################################################
