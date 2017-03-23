@@ -1,4 +1,3 @@
-
 #Read a file containing a sudoku
 #File shall be a python list
 def readSudoku(filename):
@@ -7,7 +6,7 @@ def readSudoku(filename):
     fd.close()
     return eval(l[0])
 
-#Creates a standard grid cointaining no elements
+#Creates a standard grid cointaining no elements and every possible candidates
 def newEmptyGrid():
 	l = []
 	for i in range(9):
@@ -26,10 +25,11 @@ def grid2SGrid(grid):
     cleanSGrid(grid)
     return grid
 
+#Takes a standard grid in parameters and returns a classic grid
 def SGrid2Grid(SGrid):
     for numLine in range(9):
         for elem in range(9):
-            SGrid[numLine][elem] = grid[numLine][elem][0]
+            SGrid[numLine][elem] = SGrid[numLine][elem][0]
     return SGrid
 
 #Checks for non zero values of a standard grid
@@ -41,7 +41,6 @@ def cleanSGrid(SGrid):
 
     return SGrid
 
-
 #returns True if a candidate appears only once in candidate list of a whole line
 def isAlone(SLine, cand):
     occur = 0
@@ -50,18 +49,25 @@ def isAlone(SLine, cand):
             occur += 1
             if occur > 1:
                 return False
+    
     if occur == 1:
         return True
-    else:
-        return False
+    
+    return False
 
+#Regroups rule 1 and rule 2 inside a single function
+#If a candidates appears only once in a line or a column or a square
+#Or if it's the only candidate of the element
+#Then it becomes a value
 def cleanBasic(SGrid):
     SGrid = cleanLine(SGrid)
     SGrid = cleanColumns(SGrid)
     SGrid = cleanSquare(SGrid) 
 
     return SGrid
-     
+
+#Rule 3 applied in line
+#If a candidate appears only once in the candidates of a line removes it
 def rule3Line(SGrid):
     for cand in range(1, 10):
         for line in range(9):
@@ -74,9 +80,7 @@ def rule3Line(SGrid):
                         cleanBasic(SGrid)
     return SGrid
 
-def rule3Square(SGrid):
-    return square2Line(rule3Line(square2Line(SGrid)))
-
+#Rule 3 applied in columns
 def rule3Column(SGrid):
     SGrid = retColumns(SGrid)
     SGrid= rule3Line(SGrid)
@@ -84,15 +88,14 @@ def rule3Column(SGrid):
     
     return SGrid
 
+#Rule 3 applied to a whole grid applied in lines and in columns
 def rule3(SGrid):
     SGrid = rule3Line(SGrid)
-    SGrid = cleanBasic(SGrid)
     SGrid = rule3Column(SGrid)
-
-    #SGrid = rule3Square(SGrid)
 
     return SGrid
 
+#Returns 0 if there is not two candidates in the same row of a square that are the same
 def isAlign(SLine, column, cand):
     occur = 0
     for elem in SLine[(column//3)*3: (column//3)*3 + 3]:
@@ -102,7 +105,7 @@ def isAlign(SLine, column, cand):
         return occur
     return 0
 
-#returns true iff occcur appears elsewhere in square
+#returns true if occcur appears elsewhere in square
 def isInSquare(SGrid, line, column, occur, cand):
     SSquare = square2Line(SGrid)
     for elem in SSquare[(line//3) * 3 + column // 3]:
@@ -115,11 +118,13 @@ def isInSquare(SGrid, line, column, occur, cand):
     else: 
         return True
             
+#Rule 4 applied to a line
+#Checks if a candidates appears several times in a row, and nowhere else in their square
+#If it's the case, then same candidates from the line can be removed
 def rule4Line(SGrid):
     for cand in range(1,10):
         for line in range(0,9):
             for column in range(0,9):
-                cleanBasic(SGrid)
                 occur = isAlign(SGrid[line], column, cand)
                 if occur != 0:
                     #print("AT LINE ", line, " AND COLUMN ", column, " THE CANDIDATE : ", cand, "APPEARS : ", isAlign(SGrid[line], column, cand))
@@ -133,29 +138,25 @@ def rule4Line(SGrid):
                                 #print("remove ", cand, " at column ", col, " and line ", line)
     return cleanBasic(SGrid)
 
-#Returns a list containing column number of elements that are in the same square than col
+#Returns a list containing column number of elements that are in the same square than column
 def excludeColumns(column):
     return [ (column//3) * 3 + i for i in range(3)]
 
-
-def remFromLine(line, val):
-    for elem in range(len(line)):
-        if val in elem[1]:
-            elem[1].remove(val)
-    return line
-
+#Rule 4 applied for columns only
 def rule4Columns(SGrid):
     SGrid = retColumns(SGrid)
     SGrid = rule4Line(SGrid)
     SGrid = retColumns(SGrid)
     return SGrid
 
+#Rule 4 applied in the 2 ways, by lines and by columns
 def rule4(SGrid):
     SGrid = rule4Line(SGrid)
     SGrid = rule4Columns(SGrid)
 
     return SGrid
 
+#Main function for sudoku solving
 def solveGrid(SGrid):
     candNum = 1
     while candNum > 0:
@@ -169,18 +170,19 @@ def solveGrid(SGrid):
         
     return SGrid
 
-
+#Counts the number of candidates left
 def countCandidates(SGrid):
     candNum = 0
     for line in range(9):
         for elem in range(9):
             candNum+= len(SGrid[line][elem][1])
     print("Candidates left : ", candNum)
+    return candNum
             
 #If there is already a value removes candidates
 #Shall only be used at init
 def cleanTrivialCand(SGrid):
-    for lineNum in range(9):            #Cleans trivial values
+    for lineNum in range(9):            
         for elem in range(9):
             if SGrid[lineNum][elem][0] != 0:
                 SGrid[lineNum][elem] = (SGrid[lineNum][elem][0], [])
@@ -207,12 +209,16 @@ def cleanColumns(SGrid):
     SGrid = retColumns(SGrid)
    
     return SGrid
+
+#Removes from candidates values that are already in the same square
+#Parses a grid
 def cleanSquare(SGrid):
     SGrid = square2Line(SGrid)
     cleanLine(SGrid)
     SGrid = square2Line(SGrid)
 
     return SGrid
+
 #If there's only one single candidate, then sets it as a value
 #Parses the whole grid
 def swapSingleCand(SGrid):
@@ -247,7 +253,6 @@ def printSudoku(grid):
     for line in range(9):
         print(grid[line])
 
-
 #Returns a list of all the columns of the sudoku
 def retColumns(grid):
     columns = []
@@ -266,9 +271,6 @@ def retColumns(grid):
 #line 8 : square 2,2
 def square2Line(SGrid):
     squareGrid = []
-    #squareGrid.append([SGrid[line][0:3] for line in range(4)])
-    #for i in squareGrid:
-    #    print("i : " , i)
     for line in range(9):
         squareGrid.append([])
     count = 0
@@ -324,6 +326,7 @@ def countValues(SGrid):
                 count += 1
 
     return count
+
 #Checks if each element of a line appears only once
 #Returns a list containing each value that appears more than once
 def checkLine(line):
@@ -344,19 +347,22 @@ def checkLine(line):
 #This one is solved applying only rule 1, 2 and 3
 #grid = readSudoku("../grid/grid4.gr")
 
-grid = readSudoku("../grid/grid5.gr")
 
-#grid[2][2] = 0
-#grid[2][3] = 0 
+#This one is solved applying rule 1, 2, 3 and 4
+grid = readSudoku("../grid/grid5.gr")
+ 
 printSudoku(grid)
 if (checkSudoku(grid) != ([],[])):
         print("OH DEAR, WE ARE IN TROUBLE")
+
 SGrid = grid2SGrid(grid)
-#printSudoku(SGrid)
-#square2Line(SGrid)
-#printSudoku(SGrid2Grid(SGrid))
+
 SGrid = solveGrid(SGrid)
-print("FINAL GRID")
+
+SGrid = SGrid2Grid(SGrid)
+
+print("Solved grid : ")
+
 printSudoku(SGrid)
 
 ##################################################################################################
