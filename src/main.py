@@ -38,11 +38,11 @@ def cleanSGrid(SGrid):
     SGrid = cleanBasic(SGrid)
     SGrid = rule3(SGrid)
     SGrid = rule4(SGrid) 
-    
+
     return SGrid
 
 
-#returns False iff a candidate appears more than once
+#returns True if a candidate appears only once in candidate list of a whole line
 def isAlone(SLine, cand):
     occur = 0
     for elem in SLine:
@@ -70,6 +70,7 @@ def rule3Line(SGrid):
                 for column in range(9):
                     if cand in SGrid[line][column][1]:
                         SGrid[line][column] = (cand, [])
+                        #updateLineCand(SGrid[line])
                         cleanBasic(SGrid)
     return SGrid
 
@@ -77,11 +78,15 @@ def rule3Square(SGrid):
     return square2Line(rule3Line(square2Line(SGrid)))
 
 def rule3Column(SGrid):
-    return retColumns(rule3Line(retColumns(SGrid)))
+    SGrid = retColumns(SGrid)
+    SGrid= rule3Line(SGrid)
+    SGrid = retColumns(SGrid)
+    
+    return SGrid
 
 def rule3(SGrid):
     SGrid = rule3Line(SGrid)
-
+    SGrid = cleanBasic(SGrid)
     SGrid = rule3Column(SGrid)
 
     #SGrid = rule3Square(SGrid)
@@ -90,11 +95,12 @@ def rule3(SGrid):
 
 def isAlign(SLine, column, cand):
     occur = 0
-    for elem in SLine[(column//3)*3: (column//3)*3 + 2]:
+    for elem in SLine[(column//3)*3: (column//3)*3 + 3]:
         if cand in elem[1]:
             occur += 1
     if occur >= 2:
         return occur
+    return 0
 
 #returns true iff occcur appears elsewhere in square
 def isInSquare(SGrid, line, column, occur, cand):
@@ -103,8 +109,8 @@ def isInSquare(SGrid, line, column, occur, cand):
         if cand in elem[1]:
             #print(cand, "APPEARS IN GRID")
             occur -= 1
-    
-    if not occur:
+    square2Line(SGrid)    
+    if occur == 0:
         return False
     else: 
         return True
@@ -115,30 +121,40 @@ def rule4Line(SGrid):
             for column in range(0,9):
                 cleanBasic(SGrid)
                 occur = isAlign(SGrid[line], column, cand)
-                if occur:
+                if occur != 0:
                     #print("AT LINE ", line, " AND COLUMN ", column, " THE CANDIDATE : ", cand, "APPEARS : ", isAlign(SGrid[line], column, cand))
                     if not isInSquare(SGrid, line, column, occur, cand):
-                        print("AT LINE ", line, " AND COLUMN ", column, " THE CANDIDATE : ", cand, "APPEARS : ", occur, "AND IT APPEARS NOWHERE ELSE IN THE SQUARE")
+                        #print("AT LINE ", line, " AND COLUMN ", column, " THE CANDIDATE : ", cand, "APPEARS : ", occur, "AND IT APPEARS NOWHERE ELSE IN THE SQUARE")                        
+                        excludedColumns =  excludeColumns(column)
                         for col in range(9):
-                            if cand in SGrid[line][col][1] and (col != (column//3) * 3 or col != (column//3) * 3 + 1 or col != (column // 3) * 3 + 2)  :
-                                printSudoku(SGrid)
+                            if cand in SGrid[line][col][1] and not col in excludedColumns  :
+                                #printSudoku(SGrid)
                                 SGrid[line][col][1].remove(cand)
-    return SGrid
+                                #print("remove ", cand, " at column ", col, " and line ", line)
+    return cleanBasic(SGrid)
+
+#Returns a list containing column number of elements that are in the same square than col
+def excludeColumns(column):
+    return [ (column//3) * 3 + i for i in range(3)]
+
+
+def remFromLine(line, val):
+    for elem in range(len(line)):
+        if val in elem[1]:
+            elem[1].remove(val)
+    return line
 
 def rule4Columns(SGrid):
-    return retColumns(rule4Line(retColumns(SGrid)))
+    SGrid = retColumns(SGrid)
+    SGrid = rule4Line(SGrid)
+    SGrid = retColumns(SGrid)
+    return SGrid
 
 def rule4(SGrid):
     SGrid = rule4Line(SGrid)
     SGrid = rule4Columns(SGrid)
 
     return SGrid
-
-def removeOccurences(SLine, rem):
-    for elemNum in range(lenSLine):
-        if rem in SLine[elemNum][1]:
-            SLine[elem][Num][1].remove(rem)
-    return SLine[0:3], SLine[3,6]
 
 def solveGrid(SGrid):
     candNum = 1
