@@ -6,6 +6,11 @@ def readSudoku(filename):
     fd.close()
     return eval(l[0])
 
+def inputSudoku():
+    print("type the grid as a python list of list")
+    grid = eval(input())    
+    return grid
+
 #Creates a standard grid cointaining no elements and every possible candidates
 def newEmptyGrid():
 	l = []
@@ -147,6 +152,7 @@ def rule4Columns(SGrid):
     SGrid = retColumns(SGrid)
     SGrid = rule4Line(SGrid)
     SGrid = retColumns(SGrid)
+    
     return SGrid
 
 #Rule 4 applied in the 2 ways, by lines and by columns
@@ -316,7 +322,7 @@ def checkSudoku(grid):
     for columns in retColumns(grid):
         if checkLine(columns) != []:
             issueC.append(checkLine(columns))
-    return issueL, issueC
+    return [issueL, issueC]
 
 def countValues(SGrid):
     count = 0
@@ -331,10 +337,10 @@ def countValues(SGrid):
 #Returns a list containing each value that appears more than once
 def checkLine(line):
     issue = []
-    for j in range(1,9):
+    for j in range(1,10):
         count = 0
         for i in line:
-            if i == j:
+            if i[0] == j:
                 count +=1
             if(count > 1):
                 issue.append(j)
@@ -349,8 +355,9 @@ def checkLine(line):
 
 
 #This one is solved applying rule 1, 2, 3 and 4
-grid = readSudoku("../grid/grid5.gr")
+#grid = readSudoku("../grid/grid5.gr")
  
+#grid = inputSudoku()
 printSudoku(grid)
 if (checkSudoku(grid) != ([],[])):
         print("OH DEAR, WE ARE IN TROUBLE")
@@ -367,9 +374,16 @@ printSudoku(SGrid)
 
 ##################################################################################################
 ##################################################################################################
+#########################################GRID EXAMPLES############################################
 ##################################################################################################
 ##################################################################################################
 
+#GRID 1
+#[[0, 8, 7, 0, 0, 0, 5, 2, 0], [9, 1, 0, 5, 0, 2, 0, 4, 6], [2, 0, 0, 0, 0, 0, 0, 0, 7], [0, 9, 0, 0, 2, 0, 0, 1, 0], [0, 0, 0, 1, 0, 6, 0, 0, 0], [0, 4, 0, 0, 9, 0, 0, 8, 0], [6, 0, 0, 0, 0, 0, 0, 0, 3], [5, 7, 0, 3, 0, 1, 0, 6, 8], [0, 3, 8, 0, 0, 0, 9, 5, 0]]
+#GRID 2
+#[[0, 0, 0, 0, 7, 0, 0, 0, 5], [2, 0, 7, 1, 0, 0, 4, 0, 0], [0, 6, 0, 4, 0, 0, 1, 0, 7], [5, 0, 6, 7, 0, 0, 2, 0, 0], [0, 0, 0, 0, 9, 0, 0, 0, 4], [0, 9, 0, 5, 0, 0, 3, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 8], [3, 0, 5, 0, 1, 8, 0, 6, 2], [9, 0, 8, 0, 4, 2, 0, 1, 3]]
+#GRID 3
+#[[0, 0, 0, 5, 0, 0, 0, 1, 0], [6, 0, 5, 0, 2, 0, 0, 0, 0], [0, 0, 1, 8, 0, 0, 5, 0, 3], [0, 0, 4, 0, 6, 0, 0, 0, 1], [7, 0, 0, 0, 0, 0, 0, 0, 4], [8, 0, 0, 0, 3, 0, 6, 0, 0], [2, 0, 9, 0, 0, 5, 7, 0, 0], [0, 0, 0, 0, 8, 0, 2, 0, 5], [0, 6, 0, 0, 0, 9, 0, 0, 0]]
 
 
 
