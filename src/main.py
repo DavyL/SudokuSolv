@@ -166,11 +166,14 @@ def rule4(SGrid):
 def solveGrid(SGrid):
     candNum = 1
     while candNum > 0:
+        assert (checkSGrid(SGrid) == []), "There are errors inside the sudoku"
+        if checkSGrid(SGrid) != []:
+            print("There are errors inside the sudoku")
         candNum = 0
         for line in range(9):
             for elem in range(9):
                 candNum += len(SGrid[line][elem][1])
-        print("Candidates left : ", candNum, "candidates found : ", countValues(SGrid))
+        print("Candidates left : ", candNum)
         printSudoku(SGrid) 
         SGrid = cleanSGrid(SGrid)
         
@@ -279,7 +282,7 @@ def square2Line(SGrid):
     squareGrid = []
     for line in range(9):
         squareGrid.append([])
-    count = 0
+    
     for line in range(3):
         for i in SGrid[line][0:3] : 
             squareGrid[0].append(i)
@@ -304,9 +307,6 @@ def square2Line(SGrid):
         for k in SGrid[line][6:9]: 
             squareGrid[8].append(k)
 
-    
-    #squareGrid.append(SGrid[1][0:3])
-    #squareGrid.append(SGrid[2][0:3])
     return squareGrid
 
 #Checks if the sudoku respects the rules
@@ -332,7 +332,12 @@ def countValues(SGrid):
                 count += 1
 
     return count
-
+def checkSGrid(SGrid):
+	l = []
+	for i in range(9):
+		if len(checkLine(SGrid[i])) != 0:
+			l.append(checkLine(SGrid[i])[0])
+	return l	
 #Checks if each element of a line appears only once
 #Returns a list containing each value that appears more than once
 def checkLine(line):
@@ -355,12 +360,10 @@ def checkLine(line):
 
 
 #This one is solved applying rule 1, 2, 3 and 4
-#grid = readSudoku("../grid/grid5.gr")
+grid = readSudoku("../grid/grid5.gr")
  
 #grid = inputSudoku()
-printSudoku(grid)
-if (checkSudoku(grid) != ([],[])):
-        print("OH DEAR, WE ARE IN TROUBLE")
+#grid[2][2] = 5
 
 SGrid = grid2SGrid(grid)
 
@@ -371,6 +374,7 @@ SGrid = SGrid2Grid(SGrid)
 print("Solved grid : ")
 
 printSudoku(SGrid)
+
 
 ##################################################################################################
 ##################################################################################################
